@@ -1,15 +1,21 @@
-import Data.Functor
-import Control.Applicative
-
+fizz :: [Maybe String]
 fizz = [Nothing, Nothing, Just "Fizz"]
 
+buzz :: [Maybe String]
 buzz = [Nothing, Nothing, Nothing, Nothing, Just "Buzz"]
 
-vals = zipWith (\a b -> (++) <$> a <*> b) (cycle fizz) (cycle buzz)
+combine :: Maybe String -> Maybe String -> Maybe String
+combine Nothing x = x
+combine x Nothing = x
+combine (Just x) (Just y) = Just (x ++ y)
 
-toStr :: Int -> Maybe Int -> String
-toStr i Nothing = show i
-toStr i (Just x) = show x
+combined :: [Maybe String]
+combined = zipWith combine (cycle fizz) (cycle buzz)
 
+toString :: Int -> Maybe String -> String
+toString i Nothing = show i
+toString _ (Just x) = x
+
+main :: IO ()
 main = do
-  fmap putStr take 100 vals
+  putStrLn.show $ zipWith toString [0..99] combined
