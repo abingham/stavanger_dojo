@@ -1,15 +1,6 @@
 import Data.List.Split
 import Data.Maybe
 
-test =  " _     _  _     _  _  _  _  _ \n"
-     ++ "| |  | _| _||_||_ |_   ||_||_|\n"
-     ++ "|_|  ||_  _|  | _||_|  ||_| _|\n"
-     ++ "\n"
-     ++ " _     _  _     _  _  _  _  _ \n"
-     ++ "| |  | _| _||_||_ |_   ||_||_|\n"
-     ++ "|_|  ||_  _|  | _||_|  ||_| _|\n"
-     ++ "\n"
-
 basis = [" _     _  _     _  _  _  _  _ ",
          "| |  | _| _||_||_ |_   ||_||_|",
          "|_|  ||_  _|  | _||_|  ||_| _|"]
@@ -39,3 +30,17 @@ parse l = map parseEntry glyph_sets
     entries = readEntries l             :: [[String]]
     glyph_sets = map toGlyphs entries   :: [[(String, String, String)]]
     parseEntry = map $ (flip lookup) index
+
+-- Test stuff
+
+test_data =
+     " _     _  _     _  _  _  _ \n"
+  ++ "| |  | _| _||_||_ |_   ||_|\n"
+  ++ "|_|  ||_  _|  | _||_|  ||_|\n"
+  ++ "\n"
+  ++ "    _  _  _  _  _  _     _ \n"
+  ++ "|_||_|| || ||_   |  |  ||_ \n"
+  ++ "  | _||_||_||_|  |  |  | _|\n"
+  ++ ""
+
+test = parse test_data
