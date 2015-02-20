@@ -18,4 +18,5 @@ toString _ (Just x) = x
 
 main :: IO ()
 main = do
-  putStrLn.show $ zipWith toString [0..99] combined
+  sequence $ map putStrLn $ zipWith toString [0..99] combined
+  return ()
