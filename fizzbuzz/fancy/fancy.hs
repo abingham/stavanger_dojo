@@ -1,30 +1,31 @@
 import Data.List
-import Data.Monoid
 
-data FizzBuzz = Number Integer | Fizz Integer | Buzz Integer | FizzBuzz Integer
+data FizzBuzz = Number | Fizz | Buzz | FizzBuzz
+    deriving (Show)
 
-instance Show FizzBuzz where
-  show (Number x) = show x
-  show (Fizz _) = "Fizz"
-  show (Buzz _) = "Buzz"
-  show (FizzBuzz _) = "FizzBuzz"
+combine :: FizzBuzz -> FizzBuzz -> FizzBuzz
+combine Fizz Buzz = FizzBuzz
+combine Number b = b
+combine a Number = a
 
-instance Monoid FizzBuzz where
-  mempty = Number 0
-  mappend (Fizz a) (Buzz b)
-    | a == b = FizzBuzz a
-  mappend (Buzz a) (Fizz b)
-    | a == b = FizzBuzz a
-  mappend (Number _) b = b
-  mappend a (Number _) = a
+fizzy :: [FizzBuzz]
+fizzy = cycle [Number, Number, Fizz]
 
-fizz = cycle [Number, Number, Fizz]
-buzz =  cycle [Number, Number, Number, Number, Buzz]
-fizzbuzz = zipWith3 (\f b n -> mappend (f n) (b n)) fizz buzz [1..]
+buzzy :: [FizzBuzz]
+buzzy =  cycle [Number, Number, Number, Number, Buzz]
 
-foo n = intercalate " " $ take n $ map show fizzbuzz
+fizzbuzzy :: [FizzBuzz]
+fizzbuzzy = zipWith combine fizzy buzzy
 
+display :: FizzBuzz -> Integer -> String
+display Number n = show n
+display t _ = show t
+
+fizzbuzz :: Int -> [String]
+fizzbuzz n = zipWith display (take n fizzbuzzy) [1..]
+
+main :: IO ()
 main = do
-  -- putStrLn $ foo
+  putStrLn $ intercalate " " $ fizzbuzz 100
   -- sequence $ map putStrLn.show fizzbuzz
   return ()
