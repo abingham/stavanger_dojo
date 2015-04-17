@@ -27,13 +27,8 @@ def read_dates(infile):
 def generate_around(mail_times, hour):
     """Generate a sequence of dusks/dawns surrounding `start` and `stop`.
     """
-    for mt1, mt2 in zip(mail_times, mail_times[1:]):
-        if mt1.hour < hour and mt2.hour != mt1.hour: # Have we cross the target hour
-            yield datetime.datetime.combine(date, datetime.time(hour=hour,
-                                                                tzinfo=THE_TZ))
-
-    start_date = (start - datetime.timedelta(days=1)).date()
-    stop_date = (stop + datetime.timedelta(days=1)).date()
+    start_date = (mail_times[0] - datetime.timedelta(days=1)).date()
+    stop_date = (mail_times[-1] + datetime.timedelta(days=1)).date()
 
     date = start_date
     while date <= stop_date:
@@ -42,27 +37,61 @@ def generate_around(mail_times, hour):
         date = date + datetime.timedelta(days=1)
 
 
+def update_timestamps(events, initial_tz):
+    """Set the timezone for each DAWN or DUSK event to the previous mail.
+
+    Any sleep events with no preceding mail get the TZ of the first mail.
+
+    Generates the updated sequence.
+
+    TODO: What if there is no mail?
+    TODO: Combine with generate_around.
+    """
+    curr_tz = initial_tz
+    for ts, evt in events:
+        if evt in ('DAWN', 'DUSK'):
+            new_time = ts.time()
+            new_time = new_time.replace(tzinfo=curr_tz)
+            yield datetime.datetime.combine(ts.date(), new_time), evt
+        else:
+            curr_tz = ts.tzinfo
+            yield ts, evt
+
+
+def check_night(sequence):
+    # TODO: Make this work for general sequences if possible, not just
+    # lists.
+    deltas = [y - x for x, y in zip(sequence, sequence[1:])]
+    delta_hours = list(map(lambda td: td.seconds / 60 / 60, deltas))
+    if not any(map(lambda d: d >= 7, delta_hours)):
+        print("NO SLEEP {} due to {}".format(sequence[0], delta_hours))
+
 just_dates = sorted(read_dates("maildatoer.txt"))
 mails = [(ts, 'MAIL') for ts in just_dates]
 dawns = [(ts, 'DAWN') for ts in generate_around(just_dates, 8)]
 dusks = [(ts, 'DUSK') for ts in generate_around(just_dates, 22)]
 
-print(mails)
-print(dawns)
-print(dusks)
-
 full_stream = sorted(mails + dawns + dusks, key=lambda t: t[0])
-print(full_stream)
 
-sleep_started = None
-for ts, cls in full_stream:
-    if cls in ('MAIL', 'DUSK'):
-        sleep_started = ts
-    elif sleep_started is not None:
-        sleep_time = ts - sleep_started
-        if (sleep_time.seconds / 60 / 60) < 7:
-            print("only {} on {}".format(sleep_time, ts))
-            print("last event at {}".format(sleep_started))
+stamps = []
+for ts, evt in update_timestamps(full_stream, full_stream[0][0].tzinfo):
+    if evt == 'DUSK':
+        stamps = []
+
+    stamps.append(ts)
+
+    if evt == 'DAWN':
+        check_night(stamps)
+
+# sleep_started = None
+# for ts, cls in full_stream:
+#     if cls in ('MAIL', 'DUSK'):
+#         sleep_started = ts
+#     elif sleep_started is not None:
+#         sleep_time = ts - sleep_started
+#         if (sleep_time.seconds / 60 / 60) < 7:
+#             print("only {} on {}".format(sleep_time, ts))
+#             print("last event at {}".format(sleep_started))
 
 # print(mail_dates)
 # for d in generate_dawns(mail_dates[0], mail_dates[-1]):
